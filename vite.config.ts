@@ -27,7 +27,11 @@ export default defineConfig({
 			paths: {
 				// Set by the GitHub Pages workflow to the repo name, e.g. "/random-tools",
 				// since project pages are served from a subpath.
-				base: process.env.BASE_PATH ?? ''
+				base: process.env.BASE_PATH ?? '',
+				// Keep `base` stable (not overridden to a relative value during SSR),
+				// since it's read at runtime in +layout.svelte to strip the base
+				// before handing the pathname to paraglide's localizeHref.
+				relative: false
 			}
 		}),
 		paraglideVitePlugin({
