@@ -4,9 +4,9 @@
 	import Grid from '$lib/components/Grid/Grid.svelte';
 	import UpdateControls from '$lib/components/UpdateControls.svelte';
 	
-	import { reactorPresets } from './config';
+	import { blockOptions, reactorPresets } from './config';
 	import type { BlockOption, HeatStats, ReactorConfig } from './reactor';
-	import { blockOptions, Reactor } from './reactor';
+	import { Reactor } from './reactor';
 
 	type Preset = (typeof reactorPresets)[number];
 	type PresetId = Preset['id'];
@@ -495,12 +495,6 @@
 		border: 1px solid rgba(255, 255, 255, 0.12);
 		background: rgba(15, 23, 42, 0.95);
 		box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
-	}
-
-	.loading-card p {
-		margin: 0;
-		font-size: 0.88rem;
-		color: #cbd5e1;
 	}
 
 	.cancel-button {

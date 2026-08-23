@@ -34,17 +34,6 @@ export type HeatStats = {
     maxHeat: number;
 }
 
-export const blockOptions: BlockOption[] = [
-    { id: 'empty', label: 'Empty', image: null },
-    { id: 'rod1', label: 'Single Rod', image: '/reactorblocks/rod1.png' },
-    { id: 'rod2', label: 'Double Rod', image: '/reactorblocks/rod2.png' },
-    { id: 'rod4', label: 'Quad Rod', image: '/reactorblocks/rod4.png' },
-    { id: 'pipe', label: 'Heat Pipe', image: '/reactorblocks/pipe.png' },
-    { id: 'reflector', label: 'Neutron Reflector', image: '/reactorblocks/reflector.png' },
-    { id: 'vent', label: 'Heat Vent', image: '/reactorblocks/vent.png' },
-    { id: 'absorber', label: 'Heat Absorber', image: '/reactorblocks/absorber.png' }
-]
-
 const RodBlockData: Map<BlockType, { intPulses: number, extPulses: number, fuelConsumption: number }> = new Map([
     ['rod1', { intPulses: 1, extPulses: 1, fuelConsumption: 1 }],
     ['rod2', { intPulses: 4, extPulses: 2, fuelConsumption: 2 }],
@@ -72,7 +61,6 @@ export class Reactor {
     }
 
     public setBlock(x: number, y: number, blockType: BlockType) {
-        console.log(x, y, blockType);
         if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
             return;
         }

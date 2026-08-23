@@ -49,18 +49,6 @@
         return cells.get(key) ?? defaultCellData;
     }
 
-    function getOrCreateCellData(row: number, col: number): CellData {
-        const key = getKey(row, col);
-        let cell = cells.get(key);
-
-        if (!cell) {
-            cell = createCellData();
-            cells.set(key, cell);
-        }
-
-        return cell;
-    }
-
     function updateCellData(row: number, col: number, updates: Partial<CellData>): CellData {
         const key = getKey(row, col);
         const current = cells.get(key) ?? createCellData();

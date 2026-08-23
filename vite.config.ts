@@ -21,7 +21,14 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
-			adapter: adapter()
+			adapter: adapter({
+				fallback: undefined
+			}),
+			paths: {
+				// Set by the GitHub Pages workflow to the repo name, e.g. "/random-tools",
+				// since project pages are served from a subpath.
+				base: process.env.BASE_PATH ?? ''
+			}
 		}),
 		paraglideVitePlugin({
 			project: './project.inlang',

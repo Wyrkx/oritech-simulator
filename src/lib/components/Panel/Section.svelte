@@ -1,5 +1,8 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
+	import { asset } from "$app/paths";
+
+	const caretDownIcon = `url("${asset('/caret-down.svg')}")`;
 
 
     interface Props {
@@ -30,7 +33,12 @@
                 aria-expanded={!isCollapsed}
                 aria-label={isCollapsed ? 'Expand section' : 'Collapse section'}
             >
-                <span class:collapsed={isCollapsed} class="section-toggle-icon" aria-hidden="true"></span>
+                <span
+					class:collapsed={isCollapsed}
+					class="section-toggle-icon"
+					style:--caret-down-icon={caretDownIcon}
+					aria-hidden="true"
+				></span>
             </button>
         {/if}
     </div>
@@ -97,8 +105,8 @@
         height: 1rem;
         display: block;
         background-color: currentColor;
-        -webkit-mask: url('/caret-down.svg') center / contain no-repeat;
-        mask: url('/caret-down.svg') center / contain no-repeat;
+        -webkit-mask: var(--caret-down-icon) center / contain no-repeat;
+        mask: var(--caret-down-icon) center / contain no-repeat;
         transition: transform 140ms ease;
     }
 

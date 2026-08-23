@@ -1,7 +1,7 @@
 {
 	"name": "random-tools",
 	"private": true,
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
@@ -26,7 +26,6 @@
 		"@storybook/addon-svelte-csf": "^5.1.2",
 		"@storybook/addon-vitest": "^10.5.3",
 		"@storybook/sveltekit": "^10.5.3",
-		"@sveltejs/adapter-auto": "^7.0.1",
 		"@sveltejs/adapter-static": "^3.0.10",
 		"@sveltejs/kit": "^2.63.0",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
