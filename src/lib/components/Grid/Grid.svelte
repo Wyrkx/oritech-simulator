@@ -2,7 +2,7 @@
     import Cell from "./Cell.svelte";
     import { tick } from "svelte";
     import { SvelteMap } from "svelte/reactivity";
-    import { getKey } from "../../../routes/minecraft/oritechreactor/utils";
+    import { getKey } from "$lib/utils";
 
     interface Props {
         width: number;

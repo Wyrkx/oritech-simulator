@@ -1,3 +1,5 @@
+import { parseKey } from "$lib/utils";
+
 interface Entry<T> {
     hash: number;
     key: string;
@@ -187,13 +189,4 @@ export class Vector2i {
     toString(): string {
         return `(${this.x}, ${this.y})`;
     }
-}
-
-export function getKey(x: number, y: number): string {
-    return `${x},${y}`;
-}
-
-export function parseKey(key: string): {x: number, y: number} {
-    const [x, y] = key.split(',').map(Number);
-    return {x, y};
 }

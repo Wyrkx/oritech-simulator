@@ -1,4 +1,5 @@
-import { getKey, JavaHashMapOrder, JavaHashSetOrder, parseKey, Vector2i } from "./utils";
+import { getKey, parseKey } from "$lib/utils";
+import { JavaHashMapOrder, JavaHashSetOrder, Vector2i } from "$lib/mockJava";
 
 export type ReactorConfig = {
 	safeMode: boolean;
