@@ -34,6 +34,14 @@ export type HeatStats = {
     maxHeat: number;
 }
 
+export type ReactorData = {
+    height: number;
+    width: number;
+    layers: number;
+    config: ReactorConfig;
+    blocks: Map<string, BlockType>;
+}
+
 const RodBlockData: Map<BlockType, { intPulses: number, extPulses: number, fuelConsumption: number }> = new Map([
     ['rod1', { intPulses: 1, extPulses: 1, fuelConsumption: 1 }],
     ['rod2', { intPulses: 4, extPulses: 2, fuelConsumption: 2 }],
@@ -58,6 +66,26 @@ export class Reactor {
         this.blocks = new Map();
         this.fuelRods = new Map();
         this.absorbers = new Set();
+    }
+
+    public static createFromData(reactorData: ReactorData): Reactor {
+        const { height, width, layers, config, blocks } = reactorData;
+        const reactor = new Reactor(height, width, layers, config);
+        for (const [key, blockType] of blocks) {
+            const {x, y} = parseKey(key);
+            reactor.setBlock(x, y, blockType);
+        }
+        return reactor;
+    }
+
+    public getData(): ReactorData {
+        return {
+            height: this.height,
+            width: this.width,
+            layers: this.layers,
+            config: this.config,
+            blocks: this.blocks
+        };
     }
 
     public setBlock(x: number, y: number, blockType: BlockType) {
@@ -125,8 +153,8 @@ export class Reactor {
 
         const components = new JavaHashMapOrder<BlockType>();
         const heatMap: Map<string, number> = new Map();
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
+        for (let x = 0; x < this.width; x++) {
+            for (let y = 0; y < this.height; y++) {
                 const key = getKey(x, y);
                 const blockType = this.blocks.get(key);
                 if (blockType) {

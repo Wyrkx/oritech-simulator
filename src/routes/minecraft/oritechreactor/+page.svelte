@@ -103,12 +103,8 @@
 
 		const payload = {
 			id: requestId,
-			width: boardWidth,
-			height: boardHeight,
-			layers: reactorLayers,
 			ticks: simulationTicks,
-			config: { ...reactorConfig },
-			blocks: Array.from(reactor.blocks.entries())
+			reactorData: reactor.getData()
 		};
 
 		try {
