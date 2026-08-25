@@ -104,7 +104,7 @@
 		const payload = {
 			id: requestId,
 			ticks: simulationTicks,
-			reactorData: reactor.getData()
+			reactorData: $state.snapshot(reactor.getData())
 		};
 
 		try {
