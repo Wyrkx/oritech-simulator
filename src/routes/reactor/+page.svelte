@@ -1,20 +1,24 @@
 <script lang="ts">
+	import type { BlockOption, BlockType, HeatStats, ReactorConfig } from './reactor';
+
 	import Panel from '$lib/components/Panel/Panel.svelte';
 	import PanelSection from '$lib/components/Panel/Section.svelte';
 	import Grid from '$lib/components/Grid/Grid.svelte';
 	import UpdateControls from '$lib/components/UpdateControls.svelte';
-	
+	import ContextMenu from './ContextMenu.svelte';
+
 	import { blockOptions, reactorPresets } from './config';
-	import type { BlockOption, HeatStats, ReactorConfig } from './reactor';
 	import { Reactor } from './reactor';
+	import { getKey } from '$lib/utils';
+	import { fly } from 'svelte/transition';
 
 	type Preset = (typeof reactorPresets)[number];
 	type PresetId = Preset['id'];
 
 	let activePreset = $state<string>(reactorPresets[0].id);
 	let reactorConfig = $state(reactorPresets[0].config);
-	let boardWidth = $state(9);
-	let boardHeight = $state(9);
+	let boardWidth = $state(8);
+	let boardHeight = $state(8);
 	let reactorLayers = $state(1);
 	let selectedBlock = $state<BlockOption>(blockOptions[0]);
 
@@ -68,7 +72,142 @@
 	function onCellSelect(row: number, col: number) {
 		grid.setCellImage(row, col, selectedBlock.image);
 		reactor.setBlock(col, row, selectedBlock.id);
+		update();
+	}
 
+	// Context menu related functions
+	type ClipboardCell = { row: number; col: number; blockType: BlockType };
+	// blockType only has meaning while outOfBounds is true: it's the rotate action's own
+	// way of remembering a cell's content while it's rotated off the board, since the
+	// board itself (Reactor) refuses to store anything outside its bounds.
+	type SelectedCell = { row: number; col: number; origin?: boolean; outOfBounds?: boolean; blockType?: BlockType };
+	let clipboard = $state<{ anchor: { row: number; col: number }; cells: ClipboardCell[] } | null>(null);
+	let editNotice = $state<string | null>(null);
+	let editNoticeTimeoutId: ReturnType<typeof setTimeout> | undefined;
+
+	function showEditNotice(message: string) {
+		editNotice = message;
+		clearTimeout(editNoticeTimeoutId);
+		editNoticeTimeoutId = setTimeout(() => {
+			editNotice = null;
+		}, 2500);
+	}
+
+	// Builds the clipboard from the current selection; shared by copy and cut.
+	function copyCellsToClipboard(row: number, col: number, selectedCells: SelectedCell[]): boolean {
+		const isRightClickedCellSelected = selectedCells.some(
+			(cell) => cell.row === row && cell.col === col && !cell.outOfBounds
+		);
+		if (!isRightClickedCellSelected) {
+			return false;
+		}
+
+		clipboard = {
+			anchor: { row, col },
+			cells: selectedCells
+				.filter((cell) => !cell.outOfBounds)
+				.map((cell) => ({
+					row: cell.row,
+					col: cell.col,
+					blockType: reactor.blocks.get(getKey(cell.col, cell.row)) ?? 'empty'
+				}))
+		};
+		return true;
+	}
+
+	function copySelection(row: number, col: number, selectedCells: SelectedCell[]) {
+		if (!copyCellsToClipboard(row, col, selectedCells)) {
+			showEditNotice('Right-click a selected cell to copy.');
+		}
+	}
+
+	function cutSelection(row: number, col: number, selectedCells: SelectedCell[]) {
+		if (!copyCellsToClipboard(row, col, selectedCells)) {
+			showEditNotice('Right-click a selected cell to cut.');
+			return;
+		}
+
+		for (const cell of selectedCells) {
+			if (cell.outOfBounds) continue;
+			grid.clearCell(cell.row, cell.col);
+			reactor.setBlock(cell.col, cell.row, 'empty');
+		}
+
+		update();
+	}
+
+	function pasteSelection(row: number, col: number) {
+		if (!clipboard) {
+			showEditNotice('Nothing to paste. Copy a selection first.');
+			return;
+		}
+
+		const { anchor, cells } = clipboard;
+		const pastedCells: SelectedCell[] = [];
+
+		for (const cell of cells) {
+			const targetRow = row + (cell.row - anchor.row);
+			const targetCol = col + (cell.col - anchor.col);
+			if (targetRow < 0 || targetRow >= boardHeight || targetCol < 0 || targetCol >= boardWidth) {
+				continue;
+			}
+
+			const image = blockOptions.find((option) => option.id === cell.blockType)?.image ?? null;
+			grid.setCellImage(targetRow, targetCol, image);
+			reactor.setBlock(targetCol, targetRow, cell.blockType);
+
+			pastedCells.push({
+				row: targetRow,
+				col: targetCol,
+				origin: targetRow === row && targetCol === col
+			});
+		}
+
+		grid.selectCells(pastedCells);
+		update();
+	}
+
+	function rotateSelection(originRow: number, originCol: number, selectedCells: SelectedCell[]) {
+		// Clockwise rotation around the origin: a cell "above" origin ends up "right" of
+		// it, "right" ends up "below", and so on, i.e. (dRow, dCol) -> (dCol, -dRow).
+		const rotatedCells: SelectedCell[] = selectedCells.map((cell) => {
+			const dRow = cell.row - originRow;
+			const dCol = cell.col - originCol;
+			const newRow = originRow + dCol;
+			const newCol = originCol - dRow;
+			const outOfBounds = newRow < 0 || newRow >= boardHeight || newCol < 0 || newCol >= boardWidth;
+
+			// A cell already off the board has no real data to read back from the
+			// reactor, so carry forward whatever it remembered from going out of bounds.
+			const blockType = cell.outOfBounds
+				? cell.blockType ?? 'empty'
+				: reactor.blocks.get(getKey(cell.col, cell.row)) ?? 'empty';
+
+			return {
+				row: newRow,
+				col: newCol,
+				origin: cell.row === originRow && cell.col === originCol,
+				outOfBounds,
+				blockType
+			};
+		});
+
+		// Clear every old in-bounds position first, then write every new in-bounds
+		// position, so cells that swap places don't clobber each other based on order.
+		for (const cell of selectedCells) {
+			if (cell.outOfBounds) continue;
+			grid.clearCell(cell.row, cell.col);
+			reactor.setBlock(cell.col, cell.row, 'empty');
+		}
+
+		for (const cell of rotatedCells) {
+			if (cell.outOfBounds) continue;
+			const image = blockOptions.find((option) => option.id === cell.blockType)?.image ?? null;
+			grid.setCellImage(cell.row, cell.col, image);
+			reactor.setBlock(cell.col, cell.row, cell.blockType ?? 'empty');
+		}
+
+		grid.selectCells(rotatedCells);
 		update();
 	}
 
@@ -332,8 +471,8 @@
 					</label>
 			</PanelSection>
 
-			<!-- Block Selector Section -->
-			<PanelSection heading="Block Selector" collapsible={false}>
+			<!-- Edit Section -->
+			<PanelSection heading="Edit" collapsible={false}>
 				<div class="block-selector">
 					{#each blockOptions as option (option.id)}
 						<button
@@ -363,7 +502,13 @@
 				width={boardWidth}
 				height={boardHeight}
 				draggable={true}
-				onCellSelected={onCellSelect}
+				customCellSelect={onCellSelect}
+				enableSelect={true}
+				contextMenu={ContextMenu}
+				onCut={cutSelection}
+				onCopy={copySelection}
+				onPaste={pasteSelection}
+				onRotate={rotateSelection}
 				fillColour='#000000'
 				bind:this={grid}
 			/>
@@ -430,6 +575,11 @@
 			 </PanelSection>
 		</Panel>
 	</div>
+	{#if editNotice}
+		<div class="notice-popup" role="alert" transition:fly={{ y: -16, duration: 180 }}>
+			{editNotice}
+		</div>
+	{/if}
 	{#if isHeatSimulating}
 		<div class="loading-overlay" role="alert" aria-live="assertive" aria-busy="true">
 			<div class="loading-card">
@@ -545,6 +695,21 @@
 		background: #4f46e5;
 		border: 1px solid rgba(255, 255, 255, 0.15);
 		box-sizing: border-box;
+	}
+
+	.notice-popup {
+		position: fixed;
+		top: 1rem;
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: 1100;
+		padding: 0.6rem 1rem;
+		border: 1px solid rgba(239, 68, 68, 0.52);
+		background: rgba(127, 29, 29, 0.92);
+		color: #fee2e2;
+		font-size: 0.85rem;
+		font-weight: 700;
+		box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
 	}
 
 	.section-actions {

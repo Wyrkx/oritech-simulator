@@ -3,6 +3,7 @@
         image?: string | null;
         rotation?: number;
         fillColour?: string;
+        accentColour?: string | null;
         size: number;
     }
 
@@ -10,15 +11,18 @@
         image = null,
         rotation = 0,
         fillColour = "#4f46e5",
+        accentColour = null,
         size,
     }: Props = $props();
 </script>
 
 <div
     class="cell"
+    class:accented={accentColour}
     style={`
         width: ${size}px;
         height: ${size}px;
+        ${accentColour ? `--accent: ${accentColour};` : ""}
         ${
             !image
                 ? `
@@ -45,6 +49,20 @@
     align-items: center;
     user-select: none;
     box-sizing: border-box;
+    position: relative;
+}
+
+.cell.accented {
+    box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.cell.accented::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    opacity: 0.35;
+    pointer-events: none;
 }
 
 img {

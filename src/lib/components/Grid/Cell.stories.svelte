@@ -10,6 +10,7 @@
             image: { control: 'text' },
             rotation: { control: 'number' },
             fillColour: { control: 'color' },
+            accentColour: { control: 'color' },
             size: { control: 'number' }
         },
         args: {
@@ -22,3 +23,5 @@
 </script>
 
 <Story name="Default" args={{ image: null, rotation: 0, fillColour: "#4f46e5", size: 32 }} />
+
+<Story name="Accented" args={{ image: null, rotation: 0, fillColour: "#4f46e5", accentColour: "#f59e0b", size: 32 }} />
